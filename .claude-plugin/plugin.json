@@ -1,0 +1,6 @@
+{
+  "name": "relationship-lens",
+  "version": "0.1.0",
+  "description": "Relationship Lens: a light-glass Salesforce client-relationship page published as a live artifact. Reads Account, Opportunity, Case and Contact through the connected sObject MCP, and creates cases from inside the page (AI-drafted via the viewer's Claude, or plain fields). One connector only: sObject read/write.",
+  "author": { "name": "Connectry" }
+}
