@@ -126,6 +126,12 @@
   }
   .row + .row { border-top: 1px solid #F5F5F7; }
   .row .subj { font-size: 13px; font-weight: 600; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .subj a { color: inherit; text-decoration: none; }
+  .row .subj a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .row .subj a:focus-visible { outline: 2px solid #7500C0; outline-offset: 2px; border-radius: 4px; }
+  .hero h1 a { color: inherit; text-decoration: none; }
+  .hero h1 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .hero h1 a:focus-visible { outline: 2px solid #7500C0; outline-offset: 3px; border-radius: 6px; }
   .row .subj .status { font-weight: 500; font-size: 11px; color: #6b6b70; margin-left: 8px; }
   .row .prio { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b6b70; }
   .row .prio.high { color: #b04330; }
@@ -300,6 +306,10 @@
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
   function soqlEsc(s) { return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'"); }
+  function sfUrl(type, id) {
+    if (!data.instanceUrl || !/^[a-zA-Z0-9]{15,18}$/.test(String(id || ""))) return null;
+    return data.instanceUrl.replace(/\/$/, "") + "/lightning/r/" + type + "/" + id + "/view";
+  }
   function money(n) {
     if (n == null || isNaN(n)) return "-";
     return "$" + Math.round(n).toLocaleString("en-US");
@@ -317,7 +327,10 @@
 
   /* ---------- render ---------- */
   function render() {
-    $("acctName").textContent = data.name || "Unknown account";
+    var acctLink = sfUrl("Account", data.accountId);
+    $("acctName").innerHTML = acctLink
+      ? '<a href="' + acctLink + '" target="_blank" rel="noopener">' + esc(data.name || "Unknown account") + "</a>"
+      : esc(data.name || "Unknown account");
     $("acctQuiet").textContent = [data.industry, data.type, data.owner].filter(Boolean).join("  \u00B7  ");
     $("acctReach").innerHTML = [data.website, data.phone].filter(Boolean).map(esc).join("<br>");
 
@@ -360,8 +373,12 @@
 
   function caseRow(c, landed) {
     var pr = (c.priority || "").toLowerCase();
+    var link = sfUrl("Case", c.id);
+    var subj = link
+      ? '<a href="' + link + '" target="_blank" rel="noopener">' + esc(c.subject) + "</a>"
+      : esc(c.subject);
     return '<div class="row' + (c.isClosed ? " closed" : "") + (landed ? " landed" : "") + '">' +
-      '<span class="subj">' + esc(c.subject) + '<span class="status">' + esc(c.status || "") + "</span></span>" +
+      '<span class="subj">' + subj + '<span class="status">' + esc(c.status || "") + "</span></span>" +
       '<span class="prio' + (pr === "high" ? " high" : "") + '">' + esc(c.priority || "-") + "</span>" +
       '<span class="age">' + days(c.createdDate) + "</span></div>";
   }

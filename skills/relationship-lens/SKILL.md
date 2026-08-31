@@ -50,9 +50,17 @@ capability. Standard objects only: Account, Opportunity, Case, Contact.
      "opportunities": [{"id","name","stage","amount","closeDate","isClosed"}],
      "cases": [{"id","subject","priority","status","createdDate","isClosed"}],
      "contacts": [{"id","name","title","email"}],
+     "instanceUrl": "https://<mydomain>.lightning.force.com",
      "source": "live", "asOf": "YYYY-MM-DD"
    }
    ```
+
+   `instanceUrl` makes the account name and every case row a direct Lightning link
+   (`/lightning/r/<Type>/<Id>/view`), including cases created from inside the page.
+   Resolve the My Domain once per org: `SELECT Domain, HttpsOption FROM Domain LIMIT 10`
+   and derive it from any `...my.salesforce-sites.com` / `...my.site.com` row (the part
+   before `.my.` + `.lightning.force.com`), or ask the user for their org URL. Omit the
+   field if unknown; rows then render unlinked.
 
    `accountId` must be the real Id: the page keys its live queries and case creation on it.
    A slot with `"accountId": "SAMPLE"` renders but disables live fetch (safe dry run).
