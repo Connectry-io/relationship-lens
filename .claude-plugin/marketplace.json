@@ -8,8 +8,8 @@
     {
       "name": "relationship-lens",
       "source": "./",
-      "description": "Live Salesforce client-relationship page as a Claude artifact: reads the account book through the connected sObject MCP and creates cases from inside the page, AI-drafted from plain language.",
-      "version": "0.1.0"
+      "description": "Live Salesforce client-relationship page as a Claude artifact: reads the account book through the connected sObject MCP, creates cases from inside the page (AI-drafted from plain language), and manages the case lifecycle by chat: close, reopen, escalate, reprioritize.",
+      "version": "0.2.0"
     }
   ]
 }

@@ -62,7 +62,7 @@
     padding: 0 16px;
   }
   .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 14px; letter-spacing: -.01em; }
-  .brand .glyph { color: #7500C0; font-weight: 800; font-size: 16px; }
+  .brand .glyph { color: #7500C0; font-weight: 800; font-size: 16px; margin-left: -2px; transform: translateY(-.5px); }
   .liveline { display: flex; align-items: center; gap: 14px; }
   .live { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b6b70; }
   .live .dot { width: 7px; height: 7px; border-radius: 50%; background: #a9a9ae; }
@@ -81,9 +81,9 @@
     position: relative; overflow: hidden; margin-bottom: 18px;
   }
   .hero .watermark {
-    position: absolute; top: -34px; right: -6px;
+    position: absolute; top: -30px; right: 2px;
     font-size: 170px; font-weight: 800; color: rgba(0,0,0,.04);
-    transform: rotate(8deg); pointer-events: none; user-select: none; line-height: 1;
+    pointer-events: none; user-select: none; line-height: 1;
   }
   .hero-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
   .hero h1 { font-size: 25px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }

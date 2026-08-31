@@ -87,6 +87,13 @@ Priority default "Medium"), confirm in ONE short line, create via `createSobject
 re-read by Id, add the record to the slot with `"landed": true` (clear `landed` everywhere
 else), and republish the SAME artifact. Tell the user the new Id.
 
+## Case lifecycle
+
+Status or priority changes, escalation, closing, reopening and deletion are the
+`manage-cases` skill. Route "close the case", "reopen", "escalate", "set priority",
+"delete that case" there; it updates the org and republishes this same artifact with the
+changed row landed.
+
 ## Demo script
 
 1. Warm up: "open the <real account> relationship" once before the meeting.

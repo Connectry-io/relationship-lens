@@ -55,6 +55,20 @@ Natural-language alternative for step 2, from chat: *"Create a case: portal logi
 failures for the treasury team, high priority"* - the agent creates it via the same
 connector and republishes the page with the row landed.
 
+### Case lifecycle, in plain language
+
+The `manage-cases` skill moves cases through their life from chat, against the live org,
+always with a one-line confirm before the write:
+
+- *"Close the treasury reporting case"* - Status to Closed (Salesforce stamps
+  IsClosed + ClosedDate), the row greys out in the page with the violet wash.
+- *"Reopen it"*, *"escalate the borrowing base case"*, *"put it on hold"*
+- *"Set the test case to high priority"*
+- *"Delete that case"* - explicit confirm, Recycle Bin for ~15 days.
+
+Every update re-reads the record, republishes the same artifact, and answers with the
+direct Lightning link.
+
 ## Architecture
 
 Deliberately simple. The page is a single HTML file rendered from a JSON slot
