@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relationship Lens</title>
+<meta name="description" content="One glass page per Salesforce relationship. Live read, AI-drafted write-back, one connector, zero middleware.">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    background: #F5F5F7;
+    background-image: radial-gradient(1200px 480px at 50% -100px, rgba(255,255,255,.95), rgba(255,255,255,0) 70%);
+    background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .glass {
+    background: rgba(255,255,255,.6);
+    -webkit-backdrop-filter: blur(36px) saturate(1.8);
+    backdrop-filter: blur(36px) saturate(1.8);
+    border: 1px solid rgba(0,0,0,.06);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.95),
+      inset 0 -1px 1px rgba(255,255,255,.35),
+      inset 0 0 0 1px rgba(255,255,255,.28),
+      0 18px 40px -18px rgba(0,0,0,.18);
+  }
+  .topbar {
+    position: sticky; top: 14px; z-index: 20;
+    height: 54px; border-radius: 15px; margin: 14px 0 0;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14.5px; letter-spacing: -.01em; }
+  .brand .glyph { color: #7500C0; font-weight: 800; font-size: 17px; transform: translateY(-1px); }
+  .nav { display: flex; align-items: center; gap: 8px; }
+  .nav a.quiet { font-size: 12.5px; font-weight: 600; color: #6b6b70; text-decoration: none; padding: 6px 10px; border-radius: 999px; }
+  .nav a.quiet:hover { color: #1a1a1a; background: rgba(0,0,0,.04); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #141318; color: #fff; text-decoration: none;
+    border-radius: 999px; font-size: 13px; font-weight: 600; padding: 9px 18px;
+    border: 0; cursor: pointer; font-family: inherit;
+  }
+  .btn:hover { background: #26242c; }
+  .btn.ghost { background: rgba(0,0,0,.05); color: #1a1a1a; }
+  .btn.ghost:hover { background: rgba(0,0,0,.08); }
+  a:focus-visible, button:focus-visible { outline: 2px solid #7500C0; outline-offset: 2px; }
+
+  /* hero */
+  .hero { position: relative; padding: 92px 0 30px; text-align: center; overflow: hidden; }
+  .hero .watermark {
+    position: absolute; top: -60px; right: -30px; font-size: 340px; font-weight: 800;
+    color: rgba(0,0,0,.032); transform: rotate(8deg); line-height: 1; pointer-events: none; user-select: none;
+  }
+  .kicker { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #6b6b70; }
+  .kicker .p { color: #7500C0; }
+  h1 {
+    margin: 14px auto 0; max-width: 720px;
+    font-size: clamp(34px, 6vw, 56px); font-weight: 800; letter-spacing: -.03em; line-height: 1.04;
+    text-wrap: balance;
+  }
+  .sub { margin: 18px auto 0; max-width: 560px; font-size: 16px; line-height: 1.55; color: #6b6b70; text-wrap: balance; }
+  .cta { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  .stats { margin: 44px auto 0; display: flex; justify-content: center; gap: 0; flex-wrap: wrap; }
+  .stat { padding: 4px 26px; text-align: center; }
+  .stat + .stat { border-left: 1px solid #E8E8ED; }
+  .stat b { display: block; font-size: 21px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .stat b .u { color: #7500C0; }
+  .stat span { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #6b6b70; }
+
+  /* live demo frame */
+  .demo { margin-top: 54px; }
+  .browser {
+    border-radius: 18px; overflow: hidden;
+    background: #fff; border: 1px solid #E8E8ED;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03), 0 30px 70px -30px rgba(0,0,0,.25);
+  }
+  .browser-bar {
+    height: 40px; display: flex; align-items: center; gap: 14px; padding: 0 16px;
+    background: rgba(255,255,255,.6);
+    -webkit-backdrop-filter: blur(36px) saturate(1.8); backdrop-filter: blur(36px) saturate(1.8);
+    border-bottom: 1px solid #E8E8ED;
+  }
+  .dots { display: flex; gap: 6px; }
+  .dots i { width: 10px; height: 10px; border-radius: 50%; background: #E3E3E8; }
+  .urlpill {
+    flex: 1; max-width: 380px; margin: 0 auto; text-align: center;
+    font-size: 11.5px; color: #6b6b70; background: rgba(0,0,0,.04);
+    border-radius: 999px; padding: 5px 14px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .browser iframe { display: block; width: 100%; height: 720px; border: 0; background: #F5F5F7; }
+  .demo-cap { margin-top: 12px; text-align: center; font-size: 12.5px; color: #6b6b70; }
+  .demo-cap a { color: #1a1a1a; font-weight: 600; }
+
+  /* sections */
+  section { margin-top: 84px; }
+  .eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #6b6b70; text-align: center; }
+  h2.head { margin: 10px auto 0; text-align: center; font-size: clamp(24px, 3.6vw, 32px); font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+  .lede { margin: 12px auto 0; max-width: 560px; text-align: center; font-size: 14.5px; line-height: 1.6; color: #6b6b70; }
+
+  .cards3 { margin-top: 34px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card {
+    background: #fff; border: 1px solid #E8E8ED; border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03), 0 10px 28px -14px rgba(0,0,0,.1);
+    padding: 22px 22px 20px;
+  }
+  .card .step { font-size: 11px; font-weight: 800; color: #7500C0; letter-spacing: .1em; }
+  .card h3 { margin-top: 8px; font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; }
+  .card p { margin-top: 8px; font-size: 13px; line-height: 1.6; color: #6b6b70; }
+  .card p b { color: #1a1a1a; font-weight: 600; }
+  .prompt {
+    margin-top: 12px; font-size: 12.5px; color: #1a1a1a;
+    background: #F5F5F7; border: 1px solid #E8E8ED; border-radius: 10px; padding: 9px 12px;
+  }
+  .prompt::before { content: "> "; color: #7500C0; font-weight: 800; }
+
+  /* skill anatomy */
+  .skillrows { margin: 34px auto 0; max-width: 760px; background: #fff; border: 1px solid #E8E8ED; border-radius: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.03), 0 10px 28px -14px rgba(0,0,0,.1); overflow: hidden; }
+  .srow { display: grid; grid-template-columns: 170px 1fr; gap: 18px; padding: 14px 22px; align-items: baseline; }
+  .srow + .srow { border-top: 1px solid #F1F1F4; }
+  .srow .k { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #6b6b70; }
+  .srow .v { font-size: 13.5px; line-height: 1.6; color: #1a1a1a; }
+  .srow .v code { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; background: #F5F5F7; border: 1px solid #E8E8ED; border-radius: 6px; padding: 1px 6px; }
+  .srow .v .quiet { color: #6b6b70; }
+
+  /* install */
+  .install { margin: 34px auto 0; max-width: 640px; }
+  .code {
+    background: #141318; color: #E9E9EC; border-radius: 16px; padding: 20px 22px;
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px; line-height: 1.9; overflow-x: auto;
+    box-shadow: 0 20px 50px -24px rgba(0,0,0,.4);
+  }
+  .code .c { color: #8b8b92; }
+  .install-note { margin-top: 14px; text-align: center; font-size: 12.5px; color: #6b6b70; line-height: 1.6; }
+  .install-note code { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; background: #fff; border: 1px solid #E8E8ED; border-radius: 6px; padding: 1px 6px; }
+
+  footer { margin-top: 96px; padding-top: 26px; border-top: 1px solid #E8E8ED; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+  footer .fbrand { font-size: 13px; font-weight: 700; }
+  footer .fbrand .glyph { color: #7500C0; font-weight: 800; }
+  footer span { font-size: 12px; color: #6b6b70; }
+  footer a { color: #6b6b70; text-decoration: none; font-size: 12px; font-weight: 600; }
+  footer a:hover { color: #1a1a1a; }
+
+  .reveal { opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 800px) {
+    .cards3 { grid-template-columns: 1fr; }
+    .srow { grid-template-columns: 1fr; gap: 4px; }
+    .browser iframe { height: 640px; }
+    .stat { padding: 4px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar glass">
+    <div class="brand"><span class="glyph">&gt;</span> Relationship Lens</div>
+    <nav class="nav">
+      <a class="quiet" href="#demo">Live demo</a>
+      <a class="quiet" href="#skill">The skill</a>
+      <a class="quiet" href="#install">Install</a>
+      <a class="btn" href="https://github.com/Connectry-io/relationship-lens">GitHub</a>
+    </nav>
+  </div>
+
+  <header class="hero">
+    <span class="watermark">&gt;</span>
+    <div class="kicker">A Claude plugin for Salesforce <span class="p">·</span> by Connectry</div>
+    <h1>One glass page per relationship. Live, both ways.</h1>
+    <p class="sub">Say the account's name and Claude publishes a client page filled with the real org data. Describe a case in plain language and it lands back in Salesforce, from inside the page.</p>
+    <div class="cta">
+      <a class="btn" href="#install">Install the plugin</a>
+      <a class="btn ghost" href="#demo">See it live</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><b><span class="u">1</span></b><span>connector</span></div>
+      <div class="stat"><b><span class="u">2</span></b><span>scoped tools</span></div>
+      <div class="stat"><b><span class="u">0</span></b><span>middleware</span></div>
+      <div class="stat"><b>14<span class="u">/</span>14</b><span>e2e checks</span></div>
+    </div>
+  </header>
+
+  <div class="demo reveal" id="demo">
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <div class="urlpill">claude.ai · artifact · Relationship Lens</div>
+        <div style="width:46px"></div>
+      </div>
+      <iframe src="demo.html" title="Relationship Lens live demo with sample data" loading="lazy"></iframe>
+    </div>
+    <p class="demo-cap">This is the actual page, running here with sample data. <a href="demo.html">Open it full screen</a>. Inside claude.ai it runs the same file against your live org.</p>
+  </div>
+
+  <section class="reveal">
+    <div class="eyebrow">The demo</div>
+    <h2 class="head">Two prompts. Read, then write back.</h2>
+    <div class="cards3">
+      <div class="card">
+        <div class="step">01 · READ</div>
+        <h3>Open the relationship</h3>
+        <p>Claude fuzzy-matches the account, pulls opportunities, cases and contacts with live SOQL, and publishes the page filled like for like. Empty means empty; nothing is invented.</p>
+        <div class="prompt">Open the Hartwell Precision relationship</div>
+      </div>
+      <div class="card">
+        <div class="step">02 · CONSENT</div>
+        <h3>The pop-up is the story</h3>
+        <p>On first open, claude.ai asks the viewer to let the page use the <b>sObject</b> connector. The page acts with the <b>viewer's own credentials</b>, scoped to two tools. That dialog is the governance model, on stage.</p>
+      </div>
+      <div class="card">
+        <div class="step">03 · WRITE</div>
+        <h3>Describe the case</h3>
+        <p>The viewer's Claude drafts subject and priority from plain language. One confirm creates it in the org; the page re-reads the record and the new row lands with a violet wash. Check the org tab: it's there.</p>
+        <div class="prompt">Borrowing base upload keeps failing since Friday, blocking month-end</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal" id="skill">
+    <div class="eyebrow">Under the hood</div>
+    <h2 class="head">A skill, a page, two capabilities.</h2>
+    <p class="lede">No app servers, no sync jobs. The agent follows a skill; the published page holds exactly two runtime grants.</p>
+    <div class="skillrows">
+      <div class="srow">
+        <span class="k">Skill</span>
+        <span class="v"><code>relationship-lens</code> &nbsp;drives the loop: resolve the account, read the book via live SOQL, fill the page's JSON data slot, publish, and handle natural-language writes from chat. <span class="quiet">Republishes always target the same artifact.</span></span>
+      </div>
+      <div class="srow">
+        <span class="k">Capability · mcp</span>
+        <span class="v">Scoped to one connector, two tools: <code>sObject</code> → <code>soqlQuery</code> + <code>createSobjectRecord</code>. Live re-reads, Refresh, and in-page case creation run with the viewer's own Salesforce access.</span>
+      </div>
+      <div class="srow">
+        <span class="k">Capability · sample</span>
+        <span class="v">The viewer's own Claude turns a plain-language description into a drafted case. If unavailable, the composer falls back to plain subject and priority fields.</span>
+      </div>
+      <div class="srow">
+        <span class="k">Failure design</span>
+        <span class="v">Per-error reconnect copy, one retry on read timeouts, and never a blind retry on writes. A timed-out create re-reads before anything else. <span class="quiet">Ambiguous is treated as ambiguous.</span></span>
+      </div>
+      <div class="srow">
+        <span class="k">Objects</span>
+        <span class="v">Standard only: Account, Opportunity, Case, Contact. Works against any org the connector can see.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal" id="install">
+    <div class="eyebrow">Get it</div>
+    <h2 class="head">Install in a minute.</h2>
+    <div class="install">
+      <div class="code"><span class="c"># in claude.ai, Cowork or Claude Code</span>
+/plugin marketplace add Connectry-io/relationship-lens
+/plugin install relationship-lens@relationship-lens
+
+<span class="c"># then, in a workspace with the sObject Salesforce connector:</span>
+Open the &lt;account name&gt; relationship</div>
+      <p class="install-note">Needs the <code>sObject</code> Salesforce MCP connector authorized in the workspace, and artifacts enabled.<br>If your workspace names the connector differently, say so when opening a relationship and the agent adjusts.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="fbrand"><span class="glyph">&gt;</span> Connectry</div>
+    <span>Where Connections Are Made.</span>
+    <a href="https://github.com/Connectry-io/relationship-lens">github.com/Connectry-io/relationship-lens</a>
+  </footer>
+
+</div>
+<script>
+  (function () {
+    if (!("IntersectionObserver" in window)) { document.querySelectorAll(".reveal").forEach(function (el) { el.classList.add("in"); }); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { rootMargin: "0px 0px -60px 0px" });
+    document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+  })();
+</script>
+</body>
+</html>

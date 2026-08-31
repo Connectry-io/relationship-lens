@@ -1,0 +1,580 @@
+<title>Relationship Lens</title>
+<script id="lens-data" type="application/json">
+{
+  "accountId": "SAMPLE",
+  "name": "Meridian Components Ltd",
+  "industry": "Manufacturing",
+  "type": "Customer",
+  "owner": "N. Smith",
+  "website": "meridiancomponents.com",
+  "phone": "+1 404 555 0170",
+  "opportunities": [
+    {"id": "OP1", "name": "Line expansion FY27", "stage": "Proposal", "amount": 120000, "closeDate": "2026-11-30", "isClosed": false},
+    {"id": "OP2", "name": "Tooling refresh", "stage": "Negotiation", "amount": 45000, "closeDate": "2026-10-15", "isClosed": false},
+    {"id": "OP3", "name": "Maintenance renewal", "stage": "Closed Won", "amount": 38000, "closeDate": "2026-06-01", "isClosed": true}
+  ],
+  "cases": [
+    {"id": "CS1", "subject": "Portal login failures", "priority": "High", "status": "New", "createdDate": "2026-08-19T09:00:00.000+0000", "isClosed": false},
+    {"id": "CS2", "subject": "Invoice mismatch May", "priority": "Medium", "status": "Working", "createdDate": "2026-07-31T09:00:00.000+0000", "isClosed": false}
+  ],
+  "contacts": [
+    {"id": "CT1", "name": "Elena Ruiz", "title": "COO", "email": "elena.ruiz@meridiancomponents.com"},
+    {"id": "CT2", "name": "Marcus Webb", "title": "Plant Manager", "email": "marcus.webb@meridiancomponents.com"},
+    {"id": "CT3", "name": "Priya Nair", "title": "Finance Lead", "email": "priya.nair@meridiancomponents.com"}
+  ],
+  "source": "sample",
+  "asOf": "2026-09-01"
+}
+</script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    background: #F5F5F7;
+    background-image: radial-gradient(1100px 420px at 50% -80px, rgba(255,255,255,.9), rgba(255,255,255,0) 70%);
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 780px; margin: 0 auto; padding: 0 20px 64px; }
+
+  /* ---------- glass chrome ---------- */
+  .glass {
+    background: rgba(255,255,255,.6);
+    -webkit-backdrop-filter: blur(36px) saturate(1.8);
+    backdrop-filter: blur(36px) saturate(1.8);
+    border: 1px solid rgba(0,0,0,.06);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.95),
+      inset 0 -1px 1px rgba(255,255,255,.35),
+      inset 0 0 0 1px rgba(255,255,255,.28),
+      0 18px 40px -18px rgba(0,0,0,.18);
+  }
+  .topbar {
+    position: sticky; top: 12px; z-index: 10;
+    height: 52px; border-radius: 14px;
+    margin: 12px 0 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 14px; letter-spacing: -.01em; }
+  .brand .glyph { color: #7500C0; font-weight: 800; font-size: 16px; transform: translateY(-1px); }
+  .liveline { display: flex; align-items: center; gap: 14px; }
+  .live { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b6b70; }
+  .live .dot { width: 7px; height: 7px; border-radius: 50%; background: #a9a9ae; }
+  .live.on .dot { background: #2e9e5b; box-shadow: 0 0 0 3px rgba(46,158,91,.14); }
+  .refresh-btn {
+    display: none; border: 0; cursor: pointer; font: inherit;
+    font-size: 12px; font-weight: 600; color: #1a1a1a;
+    background: rgba(0,0,0,.05); border-radius: 999px; padding: 5px 12px;
+  }
+  .refresh-btn:hover { background: rgba(0,0,0,.08); }
+  .refresh-btn.show { display: inline-block; }
+  .refresh-btn:disabled { opacity: .45; cursor: default; }
+
+  .hero {
+    border-radius: 18px; padding: 24px 26px 22px;
+    position: relative; overflow: hidden; margin-bottom: 18px;
+  }
+  .hero .watermark {
+    position: absolute; top: -34px; right: -6px;
+    font-size: 170px; font-weight: 800; color: rgba(0,0,0,.04);
+    transform: rotate(8deg); pointer-events: none; user-select: none; line-height: 1;
+  }
+  .hero-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+  .hero h1 { font-size: 25px; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+  .hero .quiet { margin-top: 5px; font-size: 13px; color: #6b6b70; }
+  .hero .reach { text-align: right; font-size: 12px; color: #6b6b70; line-height: 1.7; white-space: nowrap; }
+
+  /* ---------- solid content cards ---------- */
+  .card {
+    background: #fff; border: 1px solid #E8E8ED; border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03), 0 10px 28px -14px rgba(0,0,0,.1);
+    margin-bottom: 18px; overflow: hidden;
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px 12px;
+  }
+  .card-head h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #6b6b70; }
+  .card-head .count { color: #1a1a1a; margin-left: 6px; font-variant-numeric: tabular-nums; }
+
+  /* key information: two aligned columns of label/value rows */
+  .kinfo { display: grid; grid-template-columns: 1fr 1fr; gap: 0 36px; padding: 2px 20px 16px; }
+  .kinfo .cell {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
+    padding: 7px 0; border-bottom: 1px solid #F1F1F4; min-width: 0;
+  }
+  .kinfo .cell:nth-last-child(-n+2) { border-bottom: 0; }
+  .kinfo .k { font-size: 12px; color: #6b6b70; white-space: nowrap; }
+  .kinfo .v {
+    font-size: 13px; font-weight: 600; text-align: right;
+    font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .kinfo .v .unit { color: #7500C0; font-weight: 700; margin-right: 1px; }
+
+  /* case rows: compact, shared columns */
+  .rows { padding: 0 6px 8px; }
+  .row {
+    display: grid; grid-template-columns: 1fr 78px 92px; gap: 12px; align-items: baseline;
+    padding: 8px 14px; border-radius: 10px;
+  }
+  .row + .row { border-top: 1px solid #F5F5F7; }
+  .row .subj { font-size: 13px; font-weight: 600; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .subj .status { font-weight: 500; font-size: 11px; color: #6b6b70; margin-left: 8px; }
+  .row .prio { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b6b70; }
+  .row .prio.high { color: #b04330; }
+  .row .age { text-align: right; font-size: 12px; color: #6b6b70; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .row.closed .subj, .row.closed .prio { color: #a9a9ae; }
+  .row.closed .subj { font-weight: 500; }
+
+  .row.landed { animation: land 1.7s ease-out 1 both; }
+  @keyframes land {
+    0%   { background: rgba(161,0,255,.09); box-shadow: inset 0 0 0 1px rgba(161,0,255,.2); }
+    100% { background: rgba(161,0,255,0);  box-shadow: inset 0 0 0 1px rgba(161,0,255,0); }
+  }
+
+  .empty {
+    padding: 26px 20px 30px; text-align: center; color: #6b6b70; font-size: 13px; position: relative;
+  }
+  .empty .wm { display: block; font-size: 44px; font-weight: 800; color: rgba(0,0,0,.05); margin-bottom: 2px; }
+
+  /* shimmer loading rows (workroom style) */
+  .shimmer { padding: 8px 14px; }
+  .shimmer .bar { height: 11px; border-radius: 6px; background: linear-gradient(90deg, #EFEFF2 25%, #F7F7F9 45%, #EFEFF2 65%); background-size: 200% 100%; animation: sh 1.1s linear infinite; }
+  .shimmer .bar + .bar { margin-top: 8px; width: 62%; }
+  @keyframes sh { from { background-position: 180% 0; } to { background-position: -20% 0; } }
+
+  /* ---------- composer ---------- */
+  .btn {
+    border: 0; cursor: pointer; font: inherit;
+    background: #141318; color: #fff; border-radius: 999px;
+    font-size: 12px; font-weight: 600; padding: 7px 15px;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn:hover { background: #26242c; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.ghost { background: rgba(0,0,0,.05); color: #1a1a1a; }
+  .btn.ghost:hover { background: rgba(0,0,0,.08); }
+  .btn:focus-visible, .refresh-btn:focus-visible { outline: 2px solid #7500C0; outline-offset: 2px; }
+  .spin {
+    width: 11px; height: 11px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+    animation: rot .7s linear infinite;
+  }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  .composer { display: none; border-top: 1px solid #F1F1F4; padding: 14px 20px 18px; background: #FCFCFD; }
+  .composer.open { display: block; }
+  .composer label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b6b70; margin-bottom: 7px; }
+  .composer textarea, .composer input[type=text], .composer select {
+    width: 100%; font: inherit; font-size: 13px; color: #1a1a1a;
+    background: #fff; border: 1px solid #E8E8ED; border-radius: 10px;
+    padding: 9px 12px; resize: vertical;
+  }
+  .composer textarea:focus, .composer input:focus, .composer select:focus { outline: 2px solid rgba(117,0,192,.35); outline-offset: 0; border-color: rgba(117,0,192,.3); }
+  .composer textarea { min-height: 56px; }
+  .manual-grid { display: grid; grid-template-columns: 1fr 130px; gap: 10px; }
+  .composer .actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .composer .note { font-size: 12px; color: #6b6b70; }
+  .composer .note.err { color: #b04330; }
+  .confirm {
+    display: none; margin-top: 12px; padding: 10px 14px;
+    background: #fff; border: 1px solid #E8E8ED; border-radius: 10px;
+    font-size: 13px;
+  }
+  .confirm.open { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .confirm .line b { font-weight: 700; }
+  .confirm .line .p { text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: .07em; color: #6b6b70; margin-left: 8px; }
+  .confirm .line .p.high { color: #b04330; }
+
+  .foot { margin-top: 6px; text-align: center; font-size: 11px; color: #a9a9ae; }
+
+  /* cascade */
+  .cascade { opacity: 0; transform: translateY(3px); animation: casc .24s ease-out forwards; }
+  .cascade:nth-of-type(2) { animation-delay: .045s; }
+  .cascade:nth-of-type(3) { animation-delay: .09s; }
+  .cascade:nth-of-type(4) { animation-delay: .135s; }
+  @keyframes casc { to { opacity: 1; transform: none; } }
+
+  @media (max-width: 620px) {
+    .kinfo { grid-template-columns: 1fr; }
+    .kinfo .cell:nth-last-child(-n+2) { border-bottom: 1px solid #F1F1F4; }
+    .kinfo .cell:last-child { border-bottom: 0; }
+    .hero-row { flex-direction: column; }
+    .hero .reach { text-align: left; }
+    .row { grid-template-columns: 1fr 70px 78px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cascade, .row.landed, .shimmer .bar, .spin { animation: none !important; opacity: 1; transform: none; }
+  }
+</style>
+
+<div class="page">
+  <div class="topbar glass cascade">
+    <div class="brand"><span class="glyph">&gt;</span> Relationship Lens</div>
+    <div class="liveline">
+      <button class="refresh-btn" id="refreshBtn" type="button">Refresh</button>
+      <div class="live" id="liveBadge"><span class="dot"></span><span id="liveText">Sample data</span></div>
+    </div>
+  </div>
+
+  <div class="hero glass cascade">
+    <span class="watermark">&gt;</span>
+    <div class="hero-row">
+      <div>
+        <h1 id="acctName">&nbsp;</h1>
+        <div class="quiet" id="acctQuiet"></div>
+      </div>
+      <div class="reach" id="acctReach"></div>
+    </div>
+  </div>
+
+  <div class="card cascade">
+    <div class="card-head"><h2>Key information</h2></div>
+    <div class="kinfo" id="kinfo"></div>
+  </div>
+
+  <div class="card cascade">
+    <div class="card-head">
+      <h2>Cases <span class="count" id="caseCount"></span></h2>
+      <button class="btn" id="newCaseBtn" type="button" hidden>New case</button>
+    </div>
+    <div class="rows" id="caseRows"></div>
+
+    <div class="composer" id="composer">
+      <div id="aiMode" hidden>
+        <label for="caseDesc">Describe the case</label>
+        <textarea id="caseDesc" placeholder="e.g. Client reports the borrowing base upload keeps failing since Friday, blocking the month-end certificate."></textarea>
+        <div class="actions">
+          <button class="btn" id="draftBtn" type="button">Draft case</button>
+          <button class="btn ghost" id="cancelBtn" type="button">Cancel</button>
+          <span class="note" id="composerNote"></span>
+        </div>
+      </div>
+      <div id="manualMode" hidden>
+        <div class="manual-grid">
+          <div>
+            <label for="caseSubject">Subject</label>
+            <input type="text" id="caseSubject" maxlength="120" placeholder="Short case subject">
+          </div>
+          <div>
+            <label for="casePriority">Priority</label>
+            <select id="casePriority">
+              <option>Medium</option><option>High</option><option>Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="manualDraftBtn" type="button">Review</button>
+          <button class="btn ghost" id="manualCancelBtn" type="button">Cancel</button>
+          <span class="note" id="manualNote"></span>
+        </div>
+      </div>
+      <div class="confirm" id="confirm">
+        <div class="line">Create case: <b id="cSubject"></b><span class="p" id="cPriority"></span></div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" id="createBtn" type="button">Create in Salesforce</button>
+          <button class="btn ghost" id="editBtn" type="button">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var SERVER = "sObject"; // connector display name; the ONLY connector this page uses
+  var data = JSON.parse(document.getElementById("lens-data").textContent);
+  var mcp = null, sample = null;
+  var draft = null; // {subject, priority}
+
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+  function soqlEsc(s) { return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'"); }
+  function money(n) {
+    if (n == null || isNaN(n)) return "-";
+    return "$" + Math.round(n).toLocaleString("en-US");
+  }
+  function days(iso) {
+    if (!iso) return "-";
+    var d = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
+    return d === 0 ? "today" : d + (d === 1 ? " day" : " days");
+  }
+  function fmtDate(iso) {
+    if (!iso) return "-";
+    var d = new Date(iso);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    $("acctName").textContent = data.name || "Unknown account";
+    $("acctQuiet").textContent = [data.industry, data.type, data.owner].filter(Boolean).join("  \u00B7  ");
+    $("acctReach").innerHTML = [data.website, data.phone].filter(Boolean).map(esc).join("<br>");
+
+    var opps = data.opportunities || [];
+    var open = opps.filter(function (o) { return !o.isClosed; });
+    var withAmt = open.filter(function (o) { return o.amount != null && !isNaN(o.amount); });
+    var pipeline = withAmt.reduce(function (s, o) { return s + Number(o.amount); }, 0);
+    var largest = withAmt.slice().sort(function (a, b) { return b.amount - a.amount; })[0];
+    var nextClose = open.filter(function (o) { return o.closeDate; })
+      .sort(function (a, b) { return a.closeDate < b.closeDate ? -1 : 1; })[0];
+    var cases = data.cases || [];
+    var openCases = cases.filter(function (c) { return !c.isClosed; });
+
+    var left = [
+      ["Owner", data.owner], ["Industry", data.industry], ["Type", data.type],
+      ["Phone", data.phone], ["Website", data.website], ["Contacts", String((data.contacts || []).length)]
+    ];
+    var right = [
+      ["Open pipeline", null, money(pipeline)],
+      ["Open opportunities", String(open.length)],
+      ["Largest open", largest ? null : "-", largest ? money(largest.amount) : null],
+      ["Next close", nextClose ? fmtDate(nextClose.closeDate) : "-"],
+      ["Open cases", String(openCases.length)],
+      ["Won this year", null, money(opps.filter(function (o) { return o.isClosed && /won/i.test(o.stage || "") && o.amount != null; }).reduce(function (s, o) { return s + Number(o.amount); }, 0))]
+    ];
+    // interleave so columns read left/right per grid row
+    var cells = "";
+    for (var i = 0; i < 6; i++) { cells += kcell(left[i]); cells += kcell(right[i]); }
+    $("kinfo").innerHTML = cells;
+
+    renderCases();
+    $("foot").textContent = (data.source === "live" ? "Live Salesforce data" : "Sample data") +
+      (data.asOf ? "  \u00B7  as of " + data.asOf : "") + "  \u00B7  read through the connected sObject MCP";
+  }
+  function kcell(t) {
+    var label = t[0], v = t[1], m = t[2];
+    var val = m != null ? '<span class="unit">$</span>' + esc(m).replace(/^\$/, "") : esc(v == null || v === "" ? "-" : v);
+    return '<div class="cell"><span class="k">' + esc(label) + '</span><span class="v">' + val + "</span></div>";
+  }
+
+  function caseRow(c, landed) {
+    var pr = (c.priority || "").toLowerCase();
+    return '<div class="row' + (c.isClosed ? " closed" : "") + (landed ? " landed" : "") + '">' +
+      '<span class="subj">' + esc(c.subject) + '<span class="status">' + esc(c.status || "") + "</span></span>" +
+      '<span class="prio' + (pr === "high" ? " high" : "") + '">' + esc(c.priority || "-") + "</span>" +
+      '<span class="age">' + days(c.createdDate) + "</span></div>";
+  }
+  function renderCases() {
+    var cases = (data.cases || []).slice().sort(function (a, b) {
+      if (a.isClosed !== b.isClosed) return a.isClosed ? 1 : -1;
+      return (a.createdDate || "") < (b.createdDate || "") ? 1 : -1;
+    });
+    var openN = cases.filter(function (c) { return !c.isClosed; }).length;
+    $("caseCount").textContent = cases.length ? openN + " open" : "";
+    $("caseRows").innerHTML = cases.length
+      ? cases.map(function (c) { return caseRow(c, !!c.landed); }).join("")
+      : '<div class="empty"><span class="wm">&gt;</span>No cases on this relationship.</div>';
+  }
+  function shimmerRows(n) {
+    var s = "";
+    for (var i = 0; i < n; i++) s += '<div class="shimmer"><div class="bar"></div><div class="bar"></div></div>';
+    return s;
+  }
+
+  /* ---------- error copy (branch on code, per contract) ---------- */
+  function copyFor(e) {
+    var c = e && e.code;
+    if (c === "needs_reauth") return "Reconnect the sObject connector in claude.ai Settings > Connectors, then try again.";
+    if (c === "server_not_connected") return "Add the sObject connector in claude.ai Settings > Connectors to enable live actions.";
+    if (c === "selection_required") return "Choose which sObject connector to use when claude.ai asks, then try again.";
+    if (c === "server_unavailable") return "Salesforce did not answer. Try again in a moment.";
+    if (c === "tool_error") return "Salesforce rejected the request: " + (e.message || "unknown error");
+    if (c === "not_granted" || c === "blocked_by_policy" || c === "approval_required") return "This page is not allowed to call Salesforce for you.";
+    if (c === "rate_limited") return "Too many requests. Wait a moment and try again.";
+    return "Something went wrong talking to Salesforce. Try again.";
+  }
+  function payloadOf(r) {
+    if (r && r.payload !== undefined) return r.payload;
+    try { return JSON.parse(r.content[0].text); } catch (_) { return null; }
+  }
+
+  /* ---------- live wiring ---------- */
+  function fetchAll(refresh) {
+    var opt = refresh ? { cache: { refresh: true } } : undefined;
+    var q = function (soql) {
+      return mcp.callTool(SERVER, "soqlQuery", { q: soql }, opt).catch(function (e) {
+        if (e && e.retryable) return mcp.callTool(SERVER, "soqlQuery", { q: soql }, opt); // one retry, reads only
+        throw e;
+      });
+    };
+    var id = soqlEsc(data.accountId);
+    return Promise.all([
+      q("SELECT Id, Subject, Priority, Status, CreatedDate, IsClosed FROM Case WHERE AccountId = '" + id + "' ORDER BY CreatedDate DESC LIMIT 30"),
+      q("SELECT Id, Name, StageName, Amount, CloseDate, IsClosed FROM Opportunity WHERE AccountId = '" + id + "' ORDER BY IsClosed ASC, CloseDate ASC LIMIT 30"),
+      q("SELECT Id, Name, Title, Email FROM Contact WHERE AccountId = '" + id + "' ORDER BY Name LIMIT 30")
+    ]).then(function (rs) {
+      var cs = payloadOf(rs[0]), os = payloadOf(rs[1]), ts = payloadOf(rs[2]);
+      if (cs && cs.records) data.cases = cs.records.map(function (r) {
+        return { id: r.Id, subject: r.Subject, priority: r.Priority, status: r.Status, createdDate: r.CreatedDate, isClosed: r.IsClosed };
+      });
+      if (os && os.records) data.opportunities = os.records.map(function (r) {
+        return { id: r.Id, name: r.Name, stage: r.StageName, amount: r.Amount, closeDate: r.CloseDate, isClosed: r.IsClosed };
+      });
+      if (ts && ts.records) data.contacts = ts.records.map(function (r) {
+        return { id: r.Id, name: r.Name, title: r.Title, email: r.Email };
+      });
+      data.source = "live";
+      data.asOf = new Date().toISOString().slice(0, 10);
+      render();
+      setLive(true);
+    });
+  }
+  function setLive(on) {
+    var b = $("liveBadge");
+    if (on) { b.classList.add("on"); $("liveText").textContent = "Live \u00B7 Salesforce"; }
+    else { b.classList.remove("on"); $("liveText").textContent = data.source === "live" ? "Salesforce \u00B7 snapshot" : "Sample data"; }
+  }
+
+  /* ---------- composer flow ---------- */
+  function openComposer() {
+    $("composer").classList.add("open");
+    $("confirm").classList.remove("open");
+    if (sample) { $("aiMode").hidden = false; $("manualMode").hidden = true; $("caseDesc").focus(); }
+    else { $("aiMode").hidden = true; $("manualMode").hidden = false; $("caseSubject").focus(); }
+  }
+  function closeComposer() {
+    $("composer").classList.remove("open");
+    $("confirm").classList.remove("open");
+    $("composerNote").textContent = ""; $("manualNote").textContent = "";
+    draft = null;
+  }
+  function showConfirm(d) {
+    draft = d;
+    $("cSubject").textContent = d.subject;
+    var p = $("cPriority");
+    p.textContent = d.priority;
+    p.className = "p" + (String(d.priority).toLowerCase() === "high" ? " high" : "");
+    $("aiMode").hidden = true; $("manualMode").hidden = true;
+    $("confirm").classList.add("open");
+  }
+
+  function aiDraft() {
+    var desc = $("caseDesc").value.trim();
+    var note = $("composerNote");
+    note.className = "note";
+    if (!desc) { note.textContent = "Describe the case first."; return; }
+    var btn = $("draftBtn");
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Drafting';
+    sample.json(
+      'You draft Salesforce case records for a commercial banking relationship manager. From the description below, reply with only a JSON object {"subject": string, "priority": "High" | "Medium" | "Low"}. The subject is a crisp case title under 80 characters in sober banking language. Priority: High only for blocking or money-movement issues, Low for cosmetic or informational items, else Medium.\n\nDescription:\n' + desc.slice(0, 2000),
+      { modelTier: "quick" }
+    ).then(function (d) {
+      if (!d || typeof d.subject !== "string" || !d.subject.trim()) throw { code: "invalid_json" };
+      var pr = ["High", "Medium", "Low"].indexOf(String(d.priority)) >= 0 ? String(d.priority) : "Medium";
+      showConfirm({ subject: d.subject.trim().slice(0, 120), priority: pr });
+    }).catch(function (e) {
+      if (e && (e.code === "not_granted" || e.code === "sampling_disabled")) {
+        sample = null; openComposer(); // fall back to manual for the rest of the view
+        $("manualNote").textContent = "AI drafting unavailable. Fill it in directly.";
+      } else if (e && e.code === "cancelled") { /* quiet */ }
+      else { note.className = "note err"; note.textContent = "Drafting failed. Try again or rephrase."; }
+    }).finally(function () { btn.disabled = false; btn.textContent = "Draft case"; });
+  }
+
+  function manualDraft() {
+    var s = $("caseSubject").value.trim();
+    if (!s) { $("manualNote").textContent = "Subject is required."; return; }
+    showConfirm({ subject: s, priority: $("casePriority").value });
+  }
+
+  function createCase() {
+    if (!draft || !mcp) return;
+    var btn = $("createBtn");
+    btn.disabled = true; $("editBtn").disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Creating';
+    var rows = $("caseRows");
+    var hadEmpty = !!rows.querySelector(".empty");
+    if (hadEmpty) rows.innerHTML = "";
+    rows.insertAdjacentHTML("afterbegin", '<div id="pendingRow">' + shimmerRows(1) + "</div>");
+
+    var body = { Subject: draft.subject, Priority: draft.priority, AccountId: data.accountId, Origin: "Web" };
+    // Never auto-retry the write: a timeout is an ambiguous outcome for a create.
+    mcp.callTool(SERVER, "createSobjectRecord", { "sobject-name": "Case", body: body })
+      .then(function (r) {
+        var p = payloadOf(r);
+        if (!p || !p.id) throw { code: "tool_error", message: "no record id returned" };
+        return mcp.callTool(SERVER, "soqlQuery", { q: "SELECT Id, Subject, Priority, Status, CreatedDate, IsClosed FROM Case WHERE Id = '" + soqlEsc(p.id) + "'" })
+          .then(function (rr) {
+            var rec = (payloadOf(rr) || {}).records; rec = rec && rec[0];
+            return rec ? { id: rec.Id, subject: rec.Subject, priority: rec.Priority, status: rec.Status, createdDate: rec.CreatedDate, isClosed: rec.IsClosed }
+                       : { id: p.id, subject: draft.subject, priority: draft.priority, status: "New", createdDate: new Date().toISOString(), isClosed: false };
+          }, function () {
+            return { id: p.id, subject: draft.subject, priority: draft.priority, status: "New", createdDate: new Date().toISOString(), isClosed: false };
+          });
+      })
+      .then(function (rec) {
+        data.cases = data.cases || [];
+        data.cases.forEach(function (c) { delete c.landed; });
+        rec.landed = true;
+        data.cases.unshift(rec);
+        render();
+        closeComposer();
+        mcp.invalidate(SERVER, "soqlQuery").catch(function () {});
+      })
+      .catch(function (e) {
+        var pend = document.getElementById("pendingRow"); if (pend) pend.remove();
+        if (hadEmpty) renderCases();
+        var note = sample ? $("composerNote") : $("manualNote");
+        $("confirm").classList.remove("open");
+        if (sample) $("aiMode").hidden = false; else $("manualMode").hidden = false;
+        note.className = "note err";
+        note.textContent = (e && (e.code === "server_unavailable" || e.code === "upstream_error" || e.code === "cancelled"))
+          ? "Salesforce did not confirm. Refresh before retrying, the case may still have been created."
+          : copyFor(e);
+      })
+      .finally(function () {
+        btn.disabled = false; $("editBtn").disabled = false;
+        btn.textContent = "Create in Salesforce";
+      });
+  }
+
+  /* ---------- boot ---------- */
+  render();
+  setLive(false);
+
+  if (window.claude && window.claude.use) {
+    claude.use("mcp").then(function (ns) {
+      if (!ns) return;
+      mcp = ns;
+      $("newCaseBtn").hidden = false;
+      $("refreshBtn").classList.add("show");
+      setLive(true);
+      if (data.accountId && data.accountId !== "SAMPLE") {
+        fetchAll(false).catch(function () { setLive(data.source === "live"); });
+      }
+    });
+    claude.use("sample").then(function (ns) { if (ns) sample = ns; });
+  }
+
+  $("newCaseBtn").addEventListener("click", openComposer);
+  $("cancelBtn").addEventListener("click", closeComposer);
+  $("manualCancelBtn").addEventListener("click", closeComposer);
+  $("draftBtn").addEventListener("click", aiDraft);
+  $("manualDraftBtn").addEventListener("click", manualDraft);
+  $("editBtn").addEventListener("click", function () {
+    $("confirm").classList.remove("open");
+    if (sample) $("aiMode").hidden = false; else $("manualMode").hidden = false;
+  });
+  $("createBtn").addEventListener("click", createCase);
+  $("refreshBtn").addEventListener("click", function () {
+    if (!mcp || !data.accountId || data.accountId === "SAMPLE") return;
+    var b = $("refreshBtn"); b.disabled = true;
+    $("caseRows").innerHTML = shimmerRows(3);
+    fetchAll(true).catch(function (e) {
+      renderCases();
+      $("foot").textContent = copyFor(e);
+    }).finally(function () { b.disabled = false; });
+  });
+})();
+</script>
